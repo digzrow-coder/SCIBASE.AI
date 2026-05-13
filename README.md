@@ -3,4 +3,4 @@ deepevents.ai main codebase
 
 ## Modules
 
-- [Community Reputation System](community-reputation-system/README.md)
+- [Revenue Infrastructure](revenue-infrastructure/README.md)
