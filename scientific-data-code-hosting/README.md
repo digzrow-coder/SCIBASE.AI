@@ -42,7 +42,7 @@ console.log(fairComplianceReport(artifact));
 
 ## Demo
 
-See [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a reviewer-ready walkthrough of the upload, preview, versioning, metadata, FAIR compliance, and execution-job flow.
+See [demo-walkthrough.md](demo-walkthrough.md) for a reviewer-ready walkthrough of the upload, preview, versioning, metadata, FAIR compliance, and execution-job flow.
 
 ## Requirement Mapping
 
