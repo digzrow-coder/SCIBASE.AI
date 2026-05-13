@@ -40,6 +40,10 @@ console.log(createExecutionJob({ artifactId: artifact.id, entrypoint: "analysis.
 console.log(fairComplianceReport(artifact));
 ```
 
+## Demo
+
+See [docs/demo-walkthrough.md](docs/demo-walkthrough.md) for a reviewer-ready walkthrough of the upload, preview, versioning, metadata, FAIR compliance, and execution-job flow.
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
