@@ -93,6 +93,35 @@
         padding: 12px 0;
       }
 
+      .phase.active {
+        background: #f3f8ff;
+        margin: 0 -10px;
+        padding: 12px 10px;
+      }
+
+      .trail {
+        display: grid;
+        gap: 10px;
+      }
+
+      .trail-item {
+        border-left: 3px solid #2f6fed;
+        padding-left: 10px;
+      }
+
+      .artifact-list {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .artifact {
+        background: #eef2f7;
+        border-radius: 6px;
+        font-size: 13px;
+        padding: 8px;
+      }
+
       .ok {
         color: #087f5b;
         font-weight: 800;
@@ -153,6 +182,18 @@
         </div>
 
         <div class="panel" style="margin-top: 18px">
+          <h2>Audit Trail</h2>
+          <div class="trail" id="trail">
+            <div class="trail-item">Waiting for private workspace creation.</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 18px">
+          <h2>Packaged Artifacts</h2>
+          <div class="artifact-list" id="artifact-list"></div>
+        </div>
+
+        <div class="panel" style="margin-top: 18px">
           <h2>Manifest Digest</h2>
           <p>Reviewers can compare this digest during arbitration, sponsor review, and payout.</p>
           <pre id="digest">No package built.</pre>
@@ -173,6 +214,8 @@
       const state = {
         artifacts: [],
         workspaceId: "",
+        activePhaseId: "",
+        auditTrail: ["Waiting for private workspace creation."],
       };
 
       async function digest(value) {
@@ -189,20 +232,47 @@
             const complete = phase.deliverables.every((id) =>
               state.artifacts.some((artifact) => artifact.phaseId === phase.id && artifact.deliverableId === id),
             );
-            return `<div class="phase"><span>${phase.title}</span><span class="${complete ? "ok" : "wait"}">${
+            return `<div class="phase ${state.activePhaseId === phase.id ? "active" : ""}"><span>${
+              phase.title
+            }</span><span class="${complete ? "ok" : "wait"}">${
               complete ? "complete" : "waiting"
             }</span></div>`;
           })
           .join("");
       }
 
+      function renderTrail() {
+        document.getElementById("trail").innerHTML = state.auditTrail
+          .map((entry) => `<div class="trail-item">${entry}</div>`)
+          .join("");
+      }
+
+      function renderArtifacts() {
+        document.getElementById("artifact-list").innerHTML = state.artifacts
+          .map(
+            (artifact) =>
+              `<div class="artifact"><strong>${artifact.deliverableId}</strong><br /><code>${artifact.contentHash}</code></div>`,
+          )
+          .join("");
+      }
+
+      function addAudit(entry) {
+        state.auditTrail = [...state.auditTrail, entry];
+        renderTrail();
+      }
+
       renderPhases();
+      renderTrail();
+      renderArtifacts();
 
       document.getElementById("create").addEventListener("click", async () => {
         state.workspaceId = (await digest({ challenge: challenge.id, team: "epsilon-lab" })).slice(0, 16);
+        state.activePhaseId = "proposal";
         document.getElementById("workspace").textContent = state.workspaceId;
         document.getElementById("team").textContent = "Anonymous team package for Epsilon Lab";
         document.getElementById("add").disabled = false;
+        addAudit(`Private workspace ${state.workspaceId} created for anonymous solver handoff.`);
+        renderPhases();
       });
 
       document.getElementById("add").addEventListener("click", async () => {
@@ -214,8 +284,11 @@
             contentHash: "sha256:" + deliverableId,
           })),
         );
+        state.activePhaseId = "final";
         document.getElementById("artifacts").textContent = String(state.artifacts.length);
         document.getElementById("build").disabled = false;
+        addAudit("Code, data, notebook, whitepaper, risk, and model-card artifacts were hashed into the package.");
+        renderArtifacts();
         renderPhases();
       });
 
@@ -227,11 +300,14 @@
         );
         const reviewReady = missing.length === 0;
         const reproducibilityDigest = await digest({ challenge, artifacts: state.artifacts });
+        state.activePhaseId = "";
         document.getElementById("ready").textContent = reviewReady ? "Yes" : "No";
         document.getElementById("ready").className = reviewReady ? "metric ok" : "metric wait";
         document.getElementById("missing").textContent = reviewReady
           ? "All required deliverables are present"
           : `${missing.length} missing deliverables`;
+        addAudit("Sponsor review manifest built with anonymous identity, IP policy metadata, and reproducibility digest.");
+        renderPhases();
         document.getElementById("digest").textContent = JSON.stringify(
           {
             packageVersion: "1.0.0",
