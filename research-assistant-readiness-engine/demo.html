@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Research Assistant Readiness Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f5f7fb;
+        color: #172033;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        min-height: 100vh;
+      }
+
+      aside {
+        background: #111827;
+        color: #edf4ff;
+        padding: 28px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+        display: block;
+        font: inherit;
+        font-weight: 800;
+        margin-top: 12px;
+        padding: 11px 14px;
+        text-align: left;
+        width: 100%;
+      }
+
+      button:disabled {
+        background: #7f8ca3;
+        cursor: default;
+      }
+
+      section {
+        padding: 28px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .panel {
+        background: white;
+        border: 1px solid #dbe3ef;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .metric {
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      .ok {
+        color: #087f5b;
+      }
+
+      .warn {
+        color: #9a5b00;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .item {
+        border-left: 3px solid #2563eb;
+        padding-left: 10px;
+      }
+
+      code,
+      pre {
+        background: #eef3fa;
+        border-radius: 6px;
+      }
+
+      code {
+        padding: 2px 5px;
+      }
+
+      pre {
+        color: #172033;
+        overflow: auto;
+        padding: 14px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <aside>
+        <h1>AI Research Assistant Readiness Engine</h1>
+        <p>Peer review, reproducibility, research-gap feed, and digest generation for one project.</p>
+        <button id="review">Run Peer Review</button>
+        <button id="repro" disabled>Check Reproducibility</button>
+        <button id="gaps" disabled>Find Research Gaps</button>
+        <button id="digest" disabled>Build Digest</button>
+      </aside>
+      <section>
+        <div class="grid">
+          <div class="panel">
+            <h2>Peer Review</h2>
+            <div class="metric" id="peer-score">-</div>
+            <p id="peer-copy">Waiting for manuscript review</p>
+          </div>
+          <div class="panel">
+            <h2>Reproducibility</h2>
+            <div class="metric" id="repro-score">-</div>
+            <p id="repro-copy">Waiting for artifact checks</p>
+          </div>
+          <div class="panel">
+            <h2>Research Gaps</h2>
+            <div class="metric" id="gap-count">-</div>
+            <p id="gap-copy">Waiting for corpus scan</p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 18px">
+          <h2>Assistant Actions</h2>
+          <div class="list" id="actions">
+            <div class="item">No actions generated yet.</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 18px">
+          <h2>Digest Payload</h2>
+          <pre id="payload">No digest built.</pre>
+        </div>
+      </section>
+    </main>
+    <script>
+      const project = {
+        title: "CRISPR perturbation signatures in Alzheimer's single-cell RNA-seq",
+        claims: 3,
+        citations: 3,
+        reproducibilityChecks: ["code", "notebooks", "datasets", "dependencies", "outputs", "seeds"],
+        gaps: [
+          "CRISPR off-target replication in neurodegenerative single-cell studies",
+          "Alzheimer microglia marker panels across public donor cohorts",
+          "Benchmarking notebook reproducibility for disease atlas projects",
+        ],
+      };
+
+      const state = {
+        peer: false,
+        repro: false,
+        gaps: false,
+      };
+
+      function renderActions() {
+        const actions = [];
+        if (state.peer) actions.push("Peer-review packet ready with claim-to-citation alignment.");
+        if (state.repro) actions.push("Reproducibility runbook generated from code, notebooks, data, and expected outputs.");
+        if (state.gaps) actions.push(`Top opportunity: ${project.gaps[0]}.`);
+        document.getElementById("actions").innerHTML = actions.length
+          ? actions.map((action) => `<div class="item">${action}</div>`).join("")
+          : '<div class="item">No actions generated yet.</div>';
+      }
+
+      document.getElementById("review").addEventListener("click", () => {
+        state.peer = true;
+        document.getElementById("peer-score").textContent = "100";
+        document.getElementById("peer-score").className = "metric ok";
+        document.getElementById("peer-copy").textContent = `${project.claims} claims linked to ${project.citations} citations`;
+        document.getElementById("repro").disabled = false;
+        renderActions();
+      });
+
+      document.getElementById("repro").addEventListener("click", () => {
+        state.repro = true;
+        document.getElementById("repro-score").textContent = "100";
+        document.getElementById("repro-score").className = "metric ok";
+        document.getElementById("repro-copy").textContent = `${project.reproducibilityChecks.length} artifact classes verified`;
+        document.getElementById("gaps").disabled = false;
+        renderActions();
+      });
+
+      document.getElementById("gaps").addEventListener("click", () => {
+        state.gaps = true;
+        document.getElementById("gap-count").textContent = String(project.gaps.length);
+        document.getElementById("gap-count").className = "metric warn";
+        document.getElementById("gap-copy").textContent = "Personalized opportunity feed ranked";
+        document.getElementById("digest").disabled = false;
+        renderActions();
+      });
+
+      document.getElementById("digest").addEventListener("click", async () => {
+        const encoded = new TextEncoder().encode(JSON.stringify(project));
+        const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", encoded)))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+        document.getElementById("payload").textContent = JSON.stringify(
+          {
+            subject: `Research assistant digest: ${project.title}`,
+            peerReviewScore: 100,
+            reproducibilityConfidence: 100,
+            topResearchGap: project.gaps[0],
+            digest,
+          },
+          null,
+          2,
+        );
+      });
+    </script>
+  </body>
+</html>

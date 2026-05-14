@@ -1,0 +1,65 @@
+{
+  "id": "single-cell-alzheimer-crispr",
+  "title": "CRISPR perturbation signatures in Alzheimer's single-cell RNA-seq",
+  "domain": "computational biology",
+  "interests": ["CRISPR", "single-cell", "Alzheimer"],
+  "manuscript": {
+    "abstract": "We evaluate CRISPR perturbation effects across single-cell RNA-seq profiles to identify disease-relevant regulatory programs.",
+    "claims": [
+      "CRISPR perturbation separates microglial activation states",
+      "The proposed marker panel improves disease-state clustering",
+      "The pipeline is reproducible across two donor cohorts"
+    ],
+    "methods": [
+      "Normalize counts with size-factor scaling",
+      "Cluster cells with Leiden community detection",
+      "Score perturbation signatures using marker enrichment"
+    ],
+    "citations": [
+      "10.1038/s41586-019-1195-2",
+      "10.1038/s41592-018-0252-9",
+      "10.1101/2024.02.20.581221"
+    ],
+    "limitations": [
+      "The validation cohort is small for late-stage Alzheimer's donors",
+      "CRISPR off-target effects require additional replication"
+    ],
+    "ethicsStatement": "All donor samples use de-identified consented data from public repositories.",
+    "dataAvailability": "Raw count matrices and processed annotations are listed in data/manifest.tsv."
+  },
+  "reproducibility": {
+    "codeEntrypoints": ["scripts/run_pipeline.js"],
+    "notebooks": ["notebooks/marker-panel-analysis.ipynb"],
+    "datasets": ["data/manifest.tsv", "data/cohort-a.h5ad", "data/cohort-b.h5ad"],
+    "dependencyFiles": ["package-lock.json", "environment.yml"],
+    "expectedOutputs": ["results/marker-panel.csv", "results/cluster-quality.json"],
+    "randomSeeds": ["analysis_seed=417"],
+    "priorAttempts": [
+      {
+        "completedAt": "2026-05-10T12:30:00.000Z",
+        "status": "passed",
+        "runner": "local-sandbox"
+      }
+    ]
+  },
+  "corpusSignals": [
+    {
+      "topic": "CRISPR off-target replication in neurodegenerative single-cell studies",
+      "rationale": "Multiple papers cite off-target effects as a blocker but few replicate perturbations across donors.",
+      "replicationGap": 5,
+      "citationMomentum": 8
+    },
+    {
+      "topic": "Alzheimer microglia marker panels across public donor cohorts",
+      "rationale": "Fast-growing citations but limited cross-cohort marker agreement.",
+      "replicationGap": 4,
+      "citationMomentum": 7
+    },
+    {
+      "topic": "Benchmarking notebook reproducibility for disease atlas projects",
+      "rationale": "Notebook-based atlas projects often lack deterministic output comparisons.",
+      "replicationGap": 3,
+      "citationMomentum": 4
+    }
+  ]
+}
