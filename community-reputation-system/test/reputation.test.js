@@ -1,11 +1,13 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { createCommunityDemoServer } from "../src/server.js"
 import {
   assignBadges,
   buildLeaderboard,
   buildProjectTimeline,
   calculateReputationScore,
   createContributionRecord,
+  createDemoCommunityWorkspace,
   createReviewTemplate,
   submitPeerReview,
 } from "../src/reputation.js"
@@ -170,4 +172,41 @@ test("builds project timelines and domain leaderboards", () => {
 
   assert.equal(leaderboard.length, 1)
   assert.equal(leaderboard[0].user_id, "ada")
+})
+
+test("creates a runnable demo community workspace", () => {
+  const workspace = createDemoCommunityWorkspace()
+
+  assert.equal(workspace.review_template.discipline, "Biology")
+  assert.equal(workspace.reviews.length, 2)
+  assert.equal(workspace.contributions.length, 2)
+  assert.equal(workspace.timeline.length, 4)
+  assert.ok(workspace.reputations.ada.score > workspace.reputations.grace.score)
+  assert.equal(workspace.leaderboard[0].user_id, "ada")
+})
+
+test("serves the demo community workspace over the local API", async () => {
+  const server = createCommunityDemoServer()
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address()
+
+  try {
+    const healthResponse = await fetch(`http://127.0.0.1:${port}/health`)
+    assert.equal(healthResponse.status, 200)
+    assert.equal((await healthResponse.json()).status, "ok")
+
+    const pageResponse = await fetch(`http://127.0.0.1:${port}/`)
+    const pageHtml = await pageResponse.text()
+    assert.equal(pageResponse.status, 200)
+    assert.match(pageHtml, /Community & Reputation System/)
+
+    const workspaceResponse = await fetch(`http://127.0.0.1:${port}/demo-community`)
+    const workspace = await workspaceResponse.json()
+
+    assert.equal(workspaceResponse.status, 200)
+    assert.equal(workspace.review_template.template_id, "review_template_biology")
+    assert.equal(workspace.leaderboard.length, 2)
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  }
 })

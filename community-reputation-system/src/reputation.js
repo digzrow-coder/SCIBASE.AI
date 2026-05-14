@@ -214,3 +214,87 @@ export function buildLeaderboard(users, { domain, limit = 10 } = {}) {
     .sort((a, b) => b.reputation_score - a.reputation_score || a.display_name.localeCompare(b.display_name))
     .slice(0, limit)
 }
+
+export function createDemoCommunityWorkspace() {
+  const reviewTemplate = createReviewTemplate({ discipline: "Biology" })
+  const reviews = [
+    submitPeerReview({
+      review_id: "review_dataset",
+      project_id: "project_alpha",
+      reviewer_id: "ada",
+      target_type: "dataset",
+      target_id: "dataset_counts",
+      mode: "public",
+      discipline: "Biology",
+      scores: { clarity: 5, rigor: 5, novelty: 4, reproducibility: 5 },
+      comments: [{ anchor: "dataset.rows[12]", body: "Replicate count is clearly documented." }],
+      created_at: "2026-05-14T01:00:00.000Z",
+    }),
+    submitPeerReview({
+      review_id: "review_notebook",
+      project_id: "project_alpha",
+      reviewer_id: "grace",
+      target_type: "notebook",
+      target_id: "notebook_qc",
+      mode: "anonymous",
+      discipline: "Biology",
+      scores: { clarity: 4, rigor: 4, novelty: 4, reproducibility: 5 },
+      comments: [{ anchor: "notebook.cell[3]", body: "QC threshold rationale is reproducible." }],
+      created_at: "2026-05-14T02:00:00.000Z",
+    }),
+  ]
+  const contributions = [
+    createContributionRecord({
+      contribution_id: "credit_data",
+      project_id: "project_alpha",
+      contributor_id: "ada",
+      roles: ["Data Curation", "Validation"],
+      source_type: "review",
+      source_id: "review_dataset",
+      description: "Validated dataset metadata and FAIR reuse evidence.",
+      created_at: "2026-05-14T01:20:00.000Z",
+    }),
+    createContributionRecord({
+      contribution_id: "credit_code",
+      project_id: "project_alpha",
+      contributor_id: "grace",
+      roles: ["Software", "Formal Analysis"],
+      source_type: "commit",
+      source_id: "commit_qc",
+      description: "Added reproducible quality-control notebook.",
+      created_at: "2026-05-14T02:20:00.000Z",
+    }),
+  ]
+  const adaReputation = calculateReputationScore({
+    citations: 18,
+    forks: 4,
+    endorsements: 5,
+    peer_reviews: reviews,
+    reproducibility_badges: 1,
+    bounty_completions: 1,
+    contribution_records: contributions,
+  })
+  const graceReputation = calculateReputationScore({
+    citations: 7,
+    forks: 2,
+    endorsements: 2,
+    peer_reviews: [reviews[1]],
+    contribution_records: [contributions[1]],
+  })
+  const leaderboard = buildLeaderboard([
+    { user_id: "ada", display_name: "Ada", domain: "biology", metrics: { citations: 18, forks: 4, endorsements: 5, peer_reviews: reviews, reproducibility_badges: 1, bounty_completions: 1, contribution_records: contributions } },
+    { user_id: "grace", display_name: "Grace", domain: "biology", metrics: { citations: 7, forks: 2, endorsements: 2, peer_reviews: [reviews[1]], contribution_records: [contributions[1]] } },
+  ])
+
+  return {
+    review_template: reviewTemplate,
+    reviews,
+    contributions,
+    timeline: buildProjectTimeline({ reviews, contributions }),
+    reputations: {
+      ada: { ...adaReputation, badges: assignBadges(adaReputation) },
+      grace: { ...graceReputation, badges: assignBadges(graceReputation) },
+    },
+    leaderboard,
+  }
+}

@@ -17,6 +17,8 @@ Self-contained MVP module for issue #15. It models a scientific community layer 
 ```bash
 cd community-reputation-system
 npm test
+npm run demo
+npm run serve
 ```
 
 ```js
@@ -57,6 +59,25 @@ console.log(reputation);
 console.log(assignBadges(reputation));
 ```
 
+## Runnable Demo
+
+`npm run demo` prints a complete community workspace with a review template,
+structured peer reviews, inline comments, CRediT contribution records,
+project timeline events, reputation scores, badges, and leaderboard output.
+
+`npm run serve` starts a dependency-free local browser/API demo:
+
+- `GET /`
+- `GET /health`
+- `GET /demo-community`
+
+Example:
+
+```bash
+open http://localhost:4314/
+curl http://localhost:4314/demo-community
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -69,6 +90,7 @@ console.log(assignBadges(reputation));
 | Reputation scoring | `calculateReputationScore()` returns a transparent score plus factor breakdown. |
 | Badges and incentive tiers | `assignBadges()` derives reviewer, reproducibility, open science, bounty, and impact badges. |
 | Leaderboards | `buildLeaderboard()` ranks users globally or by domain. |
+| Local reviewer demo | `npm run demo` and `npm run serve` expose the full community/reputation workflow. |
 
 ## Verification
 
