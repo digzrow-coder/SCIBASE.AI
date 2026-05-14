@@ -18,6 +18,7 @@ Self-contained MVP module for issue #13. It provides deterministic first-pass re
 cd ai-assisted-research-tools
 npm test
 npm run demo
+npm run serve
 ```
 
 ```js
@@ -51,6 +52,19 @@ console.log(createResearchWorkflowReport({
 summary modes, peer-review diagnostics, citation graph data, missing-citation
 recommendations, and a guarded tool invocation record.
 
+`npm run serve` starts a dependency-free local demo API:
+
+- `GET /health`
+- `POST /workflow-report`
+
+Example:
+
+```bash
+curl -X POST http://localhost:4313/workflow-report \
+  -H "content-type: application/json" \
+  -d '{"title":"Reusable catalyst dataset","manuscript":"Methods describe a reproducible dataset. Results show p < 0.01.","library":[],"references":[],"citations":[]}'
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -63,6 +77,7 @@ recommendations, and a guarded tool invocation record.
 | Peer review aid | `generatePeerReviewAid()` returns summary, review questions, strengths, and concerns. |
 | Safe tool execution | `createToolInvocation()` records queued tool runs with guardrails for human review and citation integrity. |
 | End-to-end reviewer workflow | `createResearchWorkflowReport()` and `npm run demo` produce one runnable report across the MVP tools. |
+| Local API demo | `npm run serve` exposes `GET /health` and `POST /workflow-report` without external dependencies. |
 
 ## Verification
 

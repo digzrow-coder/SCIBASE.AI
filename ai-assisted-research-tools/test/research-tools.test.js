@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { createResearchToolsServer } from "../src/server.js"
 import {
   buildCitationGraph,
   checkTechnicalIssues,
@@ -113,4 +114,35 @@ test("creates a full research workflow report", () => {
   assert.equal(report.missing_citation_suggestions[0].reference.id, "ref_1")
   assert.equal(report.peer_review_aid.discipline, "chemistry")
   assert.equal(report.workflow_status, "needs-author-review")
+})
+
+test("serves workflow reports over the local demo API", async () => {
+  const server = createResearchToolsServer()
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address()
+
+  try {
+    const healthResponse = await fetch(`http://127.0.0.1:${port}/health`)
+    assert.equal(healthResponse.status, 200)
+    assert.equal((await healthResponse.json()).status, "ok")
+
+    const workflowResponse = await fetch(`http://127.0.0.1:${port}/workflow-report`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "Reusable catalyst dataset",
+        manuscript: "Methods describe a reproducible dataset. Results show p < 0.01.",
+        library: [],
+        references: [],
+        citations: [],
+      }),
+    })
+    const payload = await workflowResponse.json()
+
+    assert.equal(workflowResponse.status, 200)
+    assert.equal(payload.report.title, "Reusable catalyst dataset")
+    assert.ok(payload.report.summaries.abstract.summary.startsWith("Abstract-style summary"))
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  }
 })
