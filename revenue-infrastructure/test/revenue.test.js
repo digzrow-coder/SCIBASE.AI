@@ -1,6 +1,8 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { createRevenueDemoServer } from "../src/server.js"
 import {
+  createDemoRevenueWorkspace,
   createLicensingSnapshot,
   createPricingPlan,
   createSubscription,
@@ -163,4 +165,40 @@ test("summarizes recurring revenue and open invoice totals", () => {
   assert.equal(health.active_subscriptions, 2)
   assert.equal(health.monthly_recurring_revenue, 295)
   assert.equal(health.open_invoice_total, 99.5)
+})
+
+test("creates a runnable demo revenue workspace", () => {
+  const workspace = createDemoRevenueWorkspace()
+
+  assert.equal(workspace.plans.length, 3)
+  assert.equal(workspace.subscriptions.length, 3)
+  assert.equal(workspace.invoices.length, 2)
+  assert.ok(workspace.revenue_health.monthly_recurring_revenue > 0)
+  assert.equal(workspace.licensing_snapshot.anonymized, true)
+})
+
+test("serves the demo revenue workspace over the local API", async () => {
+  const server = createRevenueDemoServer()
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address()
+
+  try {
+    const healthResponse = await fetch(`http://127.0.0.1:${port}/health`)
+    assert.equal(healthResponse.status, 200)
+    assert.equal((await healthResponse.json()).status, "ok")
+
+    const pageResponse = await fetch(`http://127.0.0.1:${port}/`)
+    const pageHtml = await pageResponse.text()
+    assert.equal(pageResponse.status, 200)
+    assert.match(pageHtml, /Revenue Infrastructure/)
+
+    const workspaceResponse = await fetch(`http://127.0.0.1:${port}/demo-revenue`)
+    const workspace = await workspaceResponse.json()
+
+    assert.equal(workspaceResponse.status, 200)
+    assert.equal(workspace.plans[0].plan_id, "individual_pro")
+    assert.equal(workspace.revenue_health.trialing_subscriptions, 1)
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  }
 })

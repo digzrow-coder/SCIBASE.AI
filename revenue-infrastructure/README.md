@@ -17,6 +17,8 @@ Self-contained MVP module for issue #20. It models the first production slice of
 ```bash
 cd revenue-infrastructure
 npm test
+npm run demo
+npm run serve
 ```
 
 ```js
@@ -63,6 +65,25 @@ console.log(generateInvoice({
 }));
 ```
 
+## Runnable Demo
+
+`npm run demo` prints a complete revenue workspace with individual, lab, and
+institutional plans, active/trial subscriptions, usage events, usage summaries,
+invoices, anonymized licensing products, and revenue health metrics.
+
+`npm run serve` starts a dependency-free local browser/API demo:
+
+- `GET /`
+- `GET /health`
+- `GET /demo-revenue`
+
+Example:
+
+```bash
+open http://localhost:4315/
+curl http://localhost:4315/demo-revenue
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -76,6 +97,7 @@ console.log(generateInvoice({
 | Invoices | `generateInvoice()` combines subscription, usage, tax, totals, and provider metadata. |
 | Licensing APIs and analytics | `createLicensingSnapshot()` emits anonymized citation, dataset reuse, reproducibility, and topic metrics. |
 | Revenue reporting | `evaluateRevenueHealth()` summarizes active subscriptions, trials, MRR, and open invoices. |
+| Local reviewer demo | `npm run demo` and `npm run serve` expose the full revenue workflow. |
 
 ## Verification
 

@@ -231,3 +231,124 @@ export function evaluateRevenueHealth({ subscriptions = [], invoices = [] } = {}
     open_invoice_total: money(openInvoiceTotal),
   }
 }
+
+export function createDemoRevenueWorkspace() {
+  const individualPlan = createPricingPlan({
+    plan_id: "individual_pro",
+    name: "Individual Pro",
+    type: "individual",
+    monthly_price: 39,
+    included_usage: { "ai-token": 100000, "notebook-run": 20 },
+    features: ["private projects", "advanced AI tools", "project analytics"],
+  })
+  const labPlan = createPricingPlan({
+    plan_id: "lab_pro",
+    name: "Lab Pro",
+    type: "lab",
+    monthly_price: 299,
+    annual_discount_percent: 15,
+    included_usage: { "ai-token": 500000, "compute-minute": 250, "notebook-run": 100 },
+    features: ["shared workspaces", "group permissions", "priority support"],
+  })
+  const institutionPlan = createPricingPlan({
+    plan_id: "institution_enterprise",
+    name: "Institution Enterprise",
+    type: "institution",
+    monthly_price: 1800,
+    annual_discount_percent: 20,
+    included_usage: { "ai-token": 5000000, "compute-minute": 2500, "api-call": 100000 },
+    features: ["admin dashboard", "custom integrations", "SLA", "institutional invoicing"],
+  })
+  const subscriptions = [
+    createSubscription({
+      subscription_id: "sub_individual",
+      account_id: "researcher_ada",
+      plan: individualPlan,
+      provider: "stripe",
+    }),
+    createSubscription({
+      subscription_id: "sub_lab",
+      account_id: "lab_catalyst",
+      plan: labPlan,
+      cycle: "annual",
+      provider: "paypal",
+      seats: 4,
+      coupon_percent: 10,
+    }),
+    createSubscription({
+      subscription_id: "sub_institution",
+      account_id: "university_1",
+      plan: institutionPlan,
+      cycle: "annual",
+      provider: "invoice",
+      seats: 12,
+      trial_days: 30,
+    }),
+  ]
+  const usageEvents = [
+    recordUsageEvent({
+      event_id: "usage_ai",
+      account_id: "lab_catalyst",
+      unit: "ai-token",
+      quantity: 625000,
+      unit_price: 0.0002,
+      source: "peer-review-aid",
+    }),
+    recordUsageEvent({
+      event_id: "usage_compute",
+      account_id: "lab_catalyst",
+      unit: "compute-minute",
+      quantity: 310,
+      unit_price: 0.5,
+      source: "notebook-execution",
+    }),
+    recordUsageEvent({
+      event_id: "usage_api",
+      account_id: "university_1",
+      unit: "api-call",
+      quantity: 120000,
+      unit_price: 0.001,
+      source: "analytics-license",
+    }),
+  ]
+  const labUsage = summarizeUsage(subscriptions[1], usageEvents)
+  const institutionUsage = summarizeUsage(subscriptions[2], usageEvents)
+  const invoices = [
+    generateInvoice({
+      invoice_id: "inv_lab_may",
+      subscription: subscriptions[1],
+      usage_summary: labUsage,
+      period_start: "2026-05-01",
+      period_end: "2026-05-31",
+      tax_percent: 5,
+    }),
+    generateInvoice({
+      invoice_id: "inv_institution_may",
+      subscription: subscriptions[2],
+      usage_summary: institutionUsage,
+      period_start: "2026-05-01",
+      period_end: "2026-05-31",
+    }),
+  ]
+  const licensingSnapshot = createLicensingSnapshot({
+    snapshot_id: "snapshot_may",
+    account_id: "policy_consortium",
+    citation_edges: [{ from: "paper_a", to: "paper_b" }, { from: "paper_b", to: "dataset_c" }],
+    dataset_reuse_events: [{ dataset: "dataset_c", project: "project_alpha" }],
+    reproducibility_scores: [82, 91, 95],
+    topic_counts: { genomics: 18, robotics: 7, chemistry: 12 },
+  })
+
+  return {
+    plans: [individualPlan, labPlan, institutionPlan],
+    subscriptions,
+    usage_events: usageEvents,
+    usage_summaries: {
+      lab_catalyst: labUsage,
+      university_1: institutionUsage,
+    },
+    invoices,
+    licensing_snapshot: licensingSnapshot,
+    revenue_health: evaluateRevenueHealth({ subscriptions, invoices }),
+  }
+}
