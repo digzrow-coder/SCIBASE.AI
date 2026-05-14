@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createHostingDemoServer } from "../src/server.js";
 import {
   addArtifactVersion,
   buildPreview,
   createArtifactRecord,
+  createDemoHostingWorkspace,
   createExecutionJob,
   fairComplianceReport,
 } from "../src/hosting.js";
@@ -63,6 +65,7 @@ test("tracks version diffs for reproducible artifact updates", () => {
 
   assert.equal(updated.versions.length, 2);
   assert.equal(updated.versions[1].version, 2);
+  assert.equal(updated.metadata.version, 2);
   assert.equal(updated.versions[1].diff.checksumChanged, true);
   assert.equal(updated.versions[1].diff.sizeDeltaBytes > 0, true);
 });
@@ -85,4 +88,29 @@ test("creates sandboxed execution jobs with manual and scheduled triggers", () =
   assert.equal(scheduledJob.runtime, "r");
   assert.equal(scheduledJob.sandbox.memoryLimit, "8 GiB");
   assert.deepEqual(scheduledJob.triggers, [{ type: "cron", expression: "0 3 * * 1" }]);
+});
+
+test("creates and serves a runnable hosting demo workspace", async () => {
+  const workspace = createDemoHostingWorkspace();
+  assert.equal(workspace.artifacts.length, 3);
+  assert.equal(workspace.previews.dataset.kind, "table");
+  assert.equal(workspace.fair.dataset.reusable, true);
+  assert.equal(workspace.execution_jobs.length, 2);
+
+  const server = createHostingDemoServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+
+  try {
+    const pageResponse = await fetch(`http://127.0.0.1:${port}/`);
+    assert.equal(pageResponse.status, 200);
+    assert.match(await pageResponse.text(), /Scientific Data & Code Hosting/);
+
+    const workspaceResponse = await fetch(`http://127.0.0.1:${port}/demo-hosting`);
+    const payload = await workspaceResponse.json();
+    assert.equal(workspaceResponse.status, 200);
+    assert.equal(payload.artifacts[0].filename, "measurements.csv");
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
 });

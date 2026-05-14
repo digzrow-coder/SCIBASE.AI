@@ -64,6 +64,10 @@ export function addArtifactVersion(artifact, input) {
     checksum,
     sizeBytes: version.sizeBytes,
     versions: [...artifact.versions, version],
+    metadata: {
+      ...artifact.metadata,
+      version: version.version,
+    },
   };
 }
 
@@ -117,6 +121,65 @@ export function fairComplianceReport(artifact) {
     accessible: Boolean(artifact.access && artifact.metadata.url),
     interoperable: ["dataset", "code"].includes(artifact.type) && Boolean(artifact.metadata.encodingFormat),
     reusable: Boolean(artifact.license && artifact.metadata.license && artifact.versions.length > 0),
+  };
+}
+
+export function createDemoHostingWorkspace() {
+  const dataset = createArtifactRecord({
+    filename: "measurements.csv",
+    folder: "experiments/run-42",
+    title: "Run 42 measurements",
+    content: "sample,temperature\nA,21.3\nB,20.9\n",
+    tags: ["thermodynamics", "sensor", "reproducibility"],
+    creator: "SCIBASE Lab",
+    doi: "10.0000/scibase.run42",
+    access: "public",
+  });
+  const updatedDataset = addArtifactVersion(dataset, {
+    content: "sample,temperature\nA,21.3\nB,20.9\nC,21.1\n",
+    note: "Add third sample",
+    createdAt: "2026-05-14T02:00:00.000Z",
+  });
+  const notebook = createArtifactRecord({
+    filename: "analysis.ipynb",
+    folder: "code/notebooks",
+    title: "Run 42 analysis notebook",
+    content: "{\"cells\":[]}",
+    tags: ["analysis", "python"],
+    creator: "SCIBASE Lab",
+    access: "private",
+  });
+  const figure = createArtifactRecord({
+    filename: "figure.png",
+    folder: "results",
+    title: "Temperature figure",
+    content: "png-bytes",
+    tags: ["figure"],
+    creator: "SCIBASE Lab",
+    access: "public",
+  });
+
+  return {
+    artifacts: [updatedDataset, notebook, figure],
+    previews: {
+      dataset: buildPreview(updatedDataset, "sample,temperature\nA,21.3\nB,20.9\nC,21.1\n"),
+      notebook: buildPreview(notebook, "print('reproduce run 42')\n"),
+      figure: buildPreview(figure, "png-bytes"),
+    },
+    fair: {
+      dataset: fairComplianceReport(updatedDataset),
+      notebook: fairComplianceReport(notebook),
+      figure: fairComplianceReport(figure),
+    },
+    execution_jobs: [
+      createExecutionJob({ artifactId: notebook.id, entrypoint: "analysis.ipynb" }),
+      createExecutionJob({
+        artifactId: notebook.id,
+        entrypoint: "pipeline.py",
+        schedule: "0 3 * * 1",
+        memoryLimit: "8 GiB",
+      }),
+    ],
   };
 }
 

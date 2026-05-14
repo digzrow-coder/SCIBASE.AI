@@ -16,6 +16,8 @@ Self-contained MVP module for issue #14. It models the first production slice of
 ```bash
 cd scientific-data-code-hosting
 npm test
+npm run demo
+npm run serve
 ```
 
 ```js
@@ -44,6 +46,21 @@ console.log(fairComplianceReport(artifact));
 
 See [demo-walkthrough.md](demo-walkthrough.md) for a reviewer-ready walkthrough of the upload, preview, versioning, metadata, FAIR compliance, and execution-job flow.
 
+`npm run demo` prints a complete hosting workspace with artifacts, versions,
+previews, FAIR checks, and execution jobs. `npm run serve` starts a local
+browser/API demo:
+
+- `GET /`
+- `GET /health`
+- `GET /demo-hosting`
+
+Example:
+
+```bash
+open http://localhost:4317/
+curl http://localhost:4317/demo-hosting
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -57,4 +74,5 @@ See [demo-walkthrough.md](demo-walkthrough.md) for a reviewer-ready walkthrough 
 | Tags for scientific keywords | Artifact records deduplicate and sort tags. |
 | Executable environments | `createExecutionJob()` builds runtime and sandbox manifests for Python, R, Julia, and notebooks. |
 | Compute triggers | Execution jobs include manual "Run analysis" or cron triggers. |
+| Local reviewer demo | `npm run demo` and `npm run serve` expose the full data/code hosting workflow. |
 | Tests | `test/hosting.test.js` covers metadata, previews, versions, FAIR checks, and execution jobs. |
