@@ -3,6 +3,7 @@ import test from "node:test"
 import {
   buildCitationGraph,
   checkTechnicalIssues,
+  createResearchWorkflowReport,
   createToolInvocation,
   generatePeerReviewAid,
   suggestMissingCitations,
@@ -86,4 +87,30 @@ test("creates guarded tool invocation records", () => {
     () => createToolInvocation({ tool: "unknown", input: {}, user_id: "user_1", project_id: "project_1" }),
     /Unsupported tool/,
   )
+})
+
+test("creates a full research workflow report", () => {
+  const report = createResearchWorkflowReport({
+    title: "Reusable catalyst dataset",
+    abstract: "We introduce a catalyst dataset for reaction modeling.",
+    manuscript:
+      "Methods describe a reproducible dataset. Results show p < 0.01. We prove this catalyst method always works.",
+    discipline: "chemistry",
+    library: [
+      { id: "ref_1", title: "Reproducible catalyst datasets", abstract: "Reaction modeling validation." },
+      { id: "ref_2", title: "Astronomy survey", abstract: "Galaxy imaging." },
+    ],
+    references: [{ id: "ref_1", title: "Reproducible catalyst datasets" }],
+    citations: [{ source_id: "methods", reference_id: "ref_1" }],
+  })
+
+  assert.equal(report.title, "Reusable catalyst dataset")
+  assert.ok(report.summaries.abstract.summary.startsWith("Abstract-style summary"))
+  assert.ok(report.summaries.executive.summary.startsWith("Decision-ready summary"))
+  assert.ok(report.summaries.layperson.summary.startsWith("In plain language"))
+  assert.ok(report.technical_issues.some((finding) => finding.type === "statistics-context"))
+  assert.equal(report.citation_graph.citations.length, 1)
+  assert.equal(report.missing_citation_suggestions[0].reference.id, "ref_1")
+  assert.equal(report.peer_review_aid.discipline, "chemistry")
+  assert.equal(report.workflow_status, "needs-author-review")
 })

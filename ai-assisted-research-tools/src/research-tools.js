@@ -141,6 +141,39 @@ export function generatePeerReviewAid({ manuscript, discipline = "general" }) {
   }
 }
 
+export function createResearchWorkflowReport({
+  title,
+  abstract = "",
+  manuscript,
+  library = [],
+  references = [],
+  citations = [],
+  discipline = "general",
+}) {
+  const summaries = Object.fromEntries(
+    [...SUMMARY_MODES].map((mode) => [
+      mode,
+      summarizePaper({ title, abstract, body: manuscript, mode }),
+    ]),
+  )
+  const technical_issues = checkTechnicalIssues({ manuscript })
+  const citation_graph = buildCitationGraph({ references, citations })
+  const missing_citation_suggestions = suggestMissingCitations({ manuscript, library })
+  const peer_review_aid = generatePeerReviewAid({ manuscript, discipline })
+
+  return {
+    title,
+    summaries,
+    technical_issues,
+    citation_graph,
+    missing_citation_suggestions,
+    peer_review_aid,
+    workflow_status: technical_issues.some((finding) => finding.severity === "high")
+      ? "needs-author-review"
+      : "ready-for-human-review",
+  }
+}
+
 export function createToolInvocation({ tool, input, user_id, project_id }) {
   const allowed = new Set(["summarizer", "technical-checker", "citation-suggester", "peer-review-aid"])
   if (!allowed.has(tool)) throw new Error(`Unsupported tool: ${tool}`)

@@ -17,6 +17,7 @@ Self-contained MVP module for issue #13. It provides deterministic first-pass re
 ```bash
 cd ai-assisted-research-tools
 npm test
+npm run demo
 ```
 
 ```js
@@ -24,6 +25,7 @@ import {
   summarizePaper,
   checkTechnicalIssues,
   suggestMissingCitations,
+  createResearchWorkflowReport,
 } from "./src/research-tools.js";
 
 const manuscript = "Methods describe a reproducible dataset. Results show p < 0.01.";
@@ -36,7 +38,18 @@ console.log(summarizePaper({
 
 console.log(checkTechnicalIssues({ manuscript }));
 console.log(suggestMissingCitations({ manuscript, library: [] }));
+console.log(createResearchWorkflowReport({
+  title: "Reusable catalyst dataset",
+  manuscript,
+  library: [],
+  references: [],
+  citations: [],
+}));
 ```
+
+`npm run demo` prints a complete JSON workflow report containing all three
+summary modes, peer-review diagnostics, citation graph data, missing-citation
+recommendations, and a guarded tool invocation record.
 
 ## Requirement Mapping
 
@@ -49,6 +62,7 @@ console.log(suggestMissingCitations({ manuscript, library: [] }));
 | Missing citation suggestions | `suggestMissingCitations()` ranks library references by manuscript keyword overlap. |
 | Peer review aid | `generatePeerReviewAid()` returns summary, review questions, strengths, and concerns. |
 | Safe tool execution | `createToolInvocation()` records queued tool runs with guardrails for human review and citation integrity. |
+| End-to-end reviewer workflow | `createResearchWorkflowReport()` and `npm run demo` produce one runnable report across the MVP tools. |
 
 ## Verification
 

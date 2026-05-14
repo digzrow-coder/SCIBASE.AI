@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "demo": "node ./src/demo.js",
     "test": "node --test"
   }
 }
