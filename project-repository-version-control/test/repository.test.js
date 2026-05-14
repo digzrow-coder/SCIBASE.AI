@@ -58,6 +58,11 @@ test("serves the demo repository over the local API", async () => {
     assert.equal(healthResponse.status, 200)
     assert.equal((await healthResponse.json()).status, "ok")
 
+    const pageResponse = await fetch(`http://127.0.0.1:${port}/`)
+    const pageHtml = await pageResponse.text()
+    assert.equal(pageResponse.status, 200)
+    assert.match(pageHtml, /Project Repository & Version Control/)
+
     const workspaceResponse = await fetch(`http://127.0.0.1:${port}/demo-repository`)
     const workspace = await workspaceResponse.json()
 

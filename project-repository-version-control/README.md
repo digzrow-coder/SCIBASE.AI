@@ -73,12 +73,14 @@ metadata, REST export links, and archive manifest.
 
 `npm run serve` starts a dependency-free local demo API:
 
+- `GET /`
 - `GET /health`
 - `GET /demo-repository`
 
 Example:
 
 ```bash
+open http://localhost:4310/
 curl http://localhost:4310/demo-repository
 ```
 
