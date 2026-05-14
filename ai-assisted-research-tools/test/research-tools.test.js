@@ -126,6 +126,11 @@ test("serves workflow reports over the local demo API", async () => {
     assert.equal(healthResponse.status, 200)
     assert.equal((await healthResponse.json()).status, "ok")
 
+    const pageResponse = await fetch(`http://127.0.0.1:${port}/`)
+    const pageHtml = await pageResponse.text()
+    assert.equal(pageResponse.status, 200)
+    assert.match(pageHtml, /AI-Assisted Research Tools/)
+
     const workflowResponse = await fetch(`http://127.0.0.1:${port}/workflow-report`, {
       method: "POST",
       headers: { "content-type": "application/json" },
