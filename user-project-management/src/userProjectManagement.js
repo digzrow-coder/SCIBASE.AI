@@ -364,3 +364,120 @@ export function exportProjectAuditLog({ project_id, events = [] } = {}) {
     .map((event) => ({ ...event }))
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
 }
+
+export function createDemoUserProjectWorkspace() {
+  let account = createUserAccount({
+    user_id: "user_ada",
+    email: "ada@example.edu",
+    password_hash: "argon2id$demo",
+    two_factor_enabled: true,
+  })
+  account = linkExternalIdentity({
+    account,
+    provider: "orcid",
+    provider_user_id: "0000-0002-1825-0097",
+    metadata: { publications_synced: 12 },
+  })
+  account = linkExternalIdentity({
+    account,
+    provider: "saml",
+    provider_user_id: "ada@example.edu",
+    institution: "Example University",
+  })
+
+  const profile = recordProfileActivity(
+    createResearcherProfile({
+      user_id: account.user_id,
+      name: "Ada Researcher",
+      institution: "Example University",
+      fields: ["computational biology"],
+      keywords: ["single-cell", "reproducibility"],
+      public_mode: false,
+      orcid_sync: { orcid_id: "0000-0002-1825-0097" },
+    }),
+    {
+      type: "project",
+      target_id: "project_atlas",
+      summary: "Created single-cell atlas workspace",
+      created_at: "2026-05-14T01:00:00.000Z",
+    },
+  )
+
+  let project = createProjectSpace({
+    project_id: "project_atlas",
+    title: "Single-cell atlas",
+    owner_id: account.user_id,
+    visibility: "institutional-only",
+    documents: [{ document_id: "doc_methods", title: "Methods", format: "markdown", path: "docs/methods.md" }],
+    code: [{ code_id: "code_pipeline", name: "Pipeline", path: "src/pipeline.py" }],
+    datasets: [{ dataset_id: "data_counts", name: "Raw counts", path: "data/counts.parquet" }],
+    discussions: [{ discussion_id: "disc_review", title: "Review thread", comment_count: 2 }],
+    institutions: ["Example University"],
+    citations: [{ doi: "10.1234/example" }],
+  })
+  const ownerRole = grantProjectRole({ project_id: project.project_id, user_id: account.user_id, role: "owner" })
+  const reviewerRole = grantProjectRole({ project_id: project.project_id, user_id: "user_reviewer", role: "reviewer" })
+  project = setObjectPolicy(project, {
+    object_id: "data_counts",
+    object_type: "dataset",
+    allowed_roles: ["owner", "admin"],
+    permissions: ["dataset:download"],
+  })
+
+  const invitation = createInvitation({
+    invitation_id: "invite_reviewer",
+    project_id: project.project_id,
+    email: "reviewer@journal.org",
+    invited_by: account.user_id,
+    role: "reviewer",
+    expires_at: "2026-06-01T00:00:00.000Z",
+  })
+
+  let audit_events = []
+  audit_events = recordAuditEvent(audit_events, {
+    audit_id: "audit_create",
+    project_id: project.project_id,
+    actor_id: account.user_id,
+    action: "project.create",
+    target_id: project.project_id,
+    created_at: "2026-05-14T01:00:00.000Z",
+  })
+  audit_events = recordAuditEvent(audit_events, {
+    audit_id: "audit_invite",
+    project_id: project.project_id,
+    actor_id: account.user_id,
+    action: "member.invite",
+    target_id: invitation.invitation_id,
+    created_at: "2026-05-14T02:00:00.000Z",
+  })
+
+  return {
+    account,
+    profile,
+    project,
+    roles: [ownerRole, reviewerRole],
+    invitation,
+    access_checks: {
+      owner_can_update: canPerformProjectAction(ownerRole, "project:update"),
+      reviewer_can_write_review: canPerformProjectAction(reviewerRole, "review:write"),
+      reviewer_can_download_restricted_dataset: canAccessObject({
+        project,
+        object_id: "data_counts",
+        roleAssignment: reviewerRole,
+        permission: "dataset:download",
+      }),
+      institutional_reader_can_access: canAccessProject({
+        project,
+        actor: { user_id: "user_reader", institution: "Example University" },
+      }),
+    },
+    audit_log: exportProjectAuditLog({ project_id: project.project_id, events: audit_events }),
+    metrics: calculateResearcherMetrics({
+      publications: [{ doi: "10.1234/one" }],
+      projects: [{ downloads: 120, forks: 3 }],
+      peer_reviews: [{ id: "review_1" }],
+      endorsements: [{ id: "endorsement_1" }],
+      reproducibility_attempts: [{ status: "passed" }, { status: "failed" }],
+    }),
+  }
+}

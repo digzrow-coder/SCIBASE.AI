@@ -20,6 +20,8 @@ Self-contained MVP module for issue #11. It models identity, researcher profiles
 ```bash
 cd user-project-management
 npm test
+npm run demo
+npm run serve
 ```
 
 ```js
@@ -59,6 +61,24 @@ console.log(profile.public_mode);
 console.log(canAccessProject({ project, actor: { user_id: user.user_id, institution: "Example University" }, roleAssignments: [owner] }));
 ```
 
+## Runnable Demo
+
+`npm run demo` prints a complete demo workspace with identity, ORCID/SAML
+account linking, researcher profile activity, project assets, RBAC,
+object-level dataset policy, invitation, audit log, access checks, and
+reputation metrics.
+
+`npm run serve` starts a local dependency-free demo API:
+
+- `GET /health`
+- `GET /demo-workspace`
+
+Example:
+
+```bash
+curl http://localhost:4311/demo-workspace
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -79,6 +99,7 @@ console.log(canAccessProject({ project, actor: { user_id: user.user_id, institut
 | Fine-grained object-level control | `setObjectPolicy()` and `canAccessObject()` apply per-object read/write/download permissions. |
 | Project audit log | `recordAuditEvent()` and `exportProjectAuditLog()` emit ordered access and change history. |
 | Archive management | `archiveProjectSpace()` marks spaces archived and records the archive reason. |
+| Local reviewer demo | `npm run demo` and `npm run serve` expose a complete user/project governance workspace. |
 
 ## Verification
 

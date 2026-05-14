@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { createUserProjectDemoServer } from "../src/server.js"
 import {
   archiveProjectSpace,
   calculateResearcherMetrics,
@@ -8,6 +9,7 @@ import {
   canPerformProjectAction,
   createAnonymousUser,
   createInvitation,
+  createDemoUserProjectWorkspace,
   createProjectSpace,
   createResearcherProfile,
   createUserAccount,
@@ -47,6 +49,39 @@ test("creates user accounts with MFA and links external identities", () => {
     () => linkExternalIdentity({ account, provider: "saml", provider_user_id: "missing-institution" }),
     /requires institution/,
   )
+})
+
+test("creates a runnable demo workspace with access checks and metrics", () => {
+  const workspace = createDemoUserProjectWorkspace()
+
+  assert.equal(workspace.account.two_factor_enabled, true)
+  assert.equal(workspace.account.linked_identities.length, 2)
+  assert.equal(workspace.project.title, "Single-cell atlas")
+  assert.equal(workspace.access_checks.owner_can_update, true)
+  assert.equal(workspace.access_checks.reviewer_can_download_restricted_dataset, false)
+  assert.equal(workspace.audit_log.length, 2)
+  assert.ok(workspace.metrics.reputation_score > 0)
+})
+
+test("serves the demo workspace over the local API", async () => {
+  const server = createUserProjectDemoServer()
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address()
+
+  try {
+    const healthResponse = await fetch(`http://127.0.0.1:${port}/health`)
+    assert.equal(healthResponse.status, 200)
+    assert.equal((await healthResponse.json()).status, "ok")
+
+    const workspaceResponse = await fetch(`http://127.0.0.1:${port}/demo-workspace`)
+    const workspace = await workspaceResponse.json()
+
+    assert.equal(workspaceResponse.status, 200)
+    assert.equal(workspace.project.project_id, "project_atlas")
+    assert.equal(workspace.access_checks.institutional_reader_can_access, true)
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  }
 })
 
 test("supports anonymous users for public browsing or peer review", () => {
