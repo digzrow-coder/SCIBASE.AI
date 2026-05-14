@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scientific Submission Package Builder Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f7f9;
+        color: #18212f;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        min-height: 100vh;
+      }
+
+      aside {
+        background: #101827;
+        color: #eef4ff;
+        padding: 28px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        background: #2f6fed;
+        color: white;
+        cursor: pointer;
+        display: block;
+        font: inherit;
+        font-weight: 700;
+        margin-top: 12px;
+        padding: 11px 14px;
+        text-align: left;
+        width: 100%;
+      }
+
+      button:disabled {
+        background: #7f8ea6;
+        cursor: default;
+      }
+
+      section {
+        padding: 28px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .panel {
+        background: white;
+        border: 1px solid #d9e0eb;
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .metric {
+        font-size: 32px;
+        font-weight: 800;
+      }
+
+      .phase {
+        align-items: center;
+        border-top: 1px solid #e5ebf3;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        padding: 12px 0;
+      }
+
+      .ok {
+        color: #087f5b;
+        font-weight: 800;
+      }
+
+      .wait {
+        color: #9a5b00;
+        font-weight: 800;
+      }
+
+      code {
+        background: #eef2f7;
+        border-radius: 4px;
+        padding: 2px 5px;
+      }
+
+      pre {
+        background: #0b1220;
+        border-radius: 8px;
+        color: #d6e4ff;
+        overflow: auto;
+        padding: 16px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <aside>
+        <h1>Submission Package Builder</h1>
+        <p>Private solver workspace, artifact hashes, anonymous handoff, and sponsor-review manifest.</p>
+        <button id="create">Create Workspace</button>
+        <button id="add" disabled>Add Required Artifacts</button>
+        <button id="build" disabled>Build Review Package</button>
+      </aside>
+      <section>
+        <div class="grid">
+          <div class="panel">
+            <h2>Workspace</h2>
+            <div class="metric" id="workspace">-</div>
+            <p id="team">Not created</p>
+          </div>
+          <div class="panel">
+            <h2>Artifacts</h2>
+            <div class="metric" id="artifacts">0</div>
+            <p>Required deliverables packaged</p>
+          </div>
+          <div class="panel">
+            <h2>Review Ready</h2>
+            <div class="metric" id="ready">No</div>
+            <p id="missing">Waiting for package</p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 18px">
+          <h2>Phase Summary</h2>
+          <div id="phases"></div>
+        </div>
+
+        <div class="panel" style="margin-top: 18px">
+          <h2>Manifest Digest</h2>
+          <p>Reviewers can compare this digest during arbitration, sponsor review, and payout.</p>
+          <pre id="digest">No package built.</pre>
+        </div>
+      </section>
+    </main>
+    <script>
+      const challenge = {
+        id: "bio-marker-rna-seq-2026",
+        title: "Identify biomarker candidates from single-cell RNA-seq data",
+        phases: [
+          { id: "proposal", title: "Proposal and feasibility", deliverables: ["research-plan", "risk-register"] },
+          { id: "prototype", title: "Prototype analysis", deliverables: ["notebook", "dataset-manifest"] },
+          { id: "final", title: "Final package", deliverables: ["whitepaper", "model-card"] },
+        ],
+      };
+
+      const state = {
+        artifacts: [],
+        workspaceId: "",
+      };
+
+      async function digest(value) {
+        const encoded = new TextEncoder().encode(JSON.stringify(value));
+        const hash = await crypto.subtle.digest("SHA-256", encoded);
+        return Array.from(new Uint8Array(hash))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+      }
+
+      function renderPhases() {
+        document.getElementById("phases").innerHTML = challenge.phases
+          .map((phase) => {
+            const complete = phase.deliverables.every((id) =>
+              state.artifacts.some((artifact) => artifact.phaseId === phase.id && artifact.deliverableId === id),
+            );
+            return `<div class="phase"><span>${phase.title}</span><span class="${complete ? "ok" : "wait"}">${
+              complete ? "complete" : "waiting"
+            }</span></div>`;
+          })
+          .join("");
+      }
+
+      renderPhases();
+
+      document.getElementById("create").addEventListener("click", async () => {
+        state.workspaceId = (await digest({ challenge: challenge.id, team: "epsilon-lab" })).slice(0, 16);
+        document.getElementById("workspace").textContent = state.workspaceId;
+        document.getElementById("team").textContent = "Anonymous team package for Epsilon Lab";
+        document.getElementById("add").disabled = false;
+      });
+
+      document.getElementById("add").addEventListener("click", async () => {
+        state.artifacts = challenge.phases.flatMap((phase) =>
+          phase.deliverables.map((deliverableId) => ({
+            id: `${phase.id}-${deliverableId}`,
+            phaseId: phase.id,
+            deliverableId,
+            contentHash: "sha256:" + deliverableId,
+          })),
+        );
+        document.getElementById("artifacts").textContent = String(state.artifacts.length);
+        document.getElementById("build").disabled = false;
+        renderPhases();
+      });
+
+      document.getElementById("build").addEventListener("click", async () => {
+        const missing = challenge.phases.flatMap((phase) =>
+          phase.deliverables.filter(
+            (id) => !state.artifacts.some((artifact) => artifact.phaseId === phase.id && artifact.deliverableId === id),
+          ),
+        );
+        const reviewReady = missing.length === 0;
+        const reproducibilityDigest = await digest({ challenge, artifacts: state.artifacts });
+        document.getElementById("ready").textContent = reviewReady ? "Yes" : "No";
+        document.getElementById("ready").className = reviewReady ? "metric ok" : "metric wait";
+        document.getElementById("missing").textContent = reviewReady
+          ? "All required deliverables are present"
+          : `${missing.length} missing deliverables`;
+        document.getElementById("digest").textContent = JSON.stringify(
+          {
+            packageVersion: "1.0.0",
+            workspaceId: state.workspaceId,
+            anonymous: true,
+            artifactCount: state.artifacts.length,
+            readyForSponsorReview: reviewReady,
+            reproducibilityDigest,
+          },
+          null,
+          2,
+        );
+      });
+    </script>
+  </body>
+</html>

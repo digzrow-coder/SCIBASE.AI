@@ -1,0 +1,69 @@
+{
+  "id": "bio-marker-rna-seq-2026",
+  "title": "Identify biomarker candidates from single-cell RNA-seq data",
+  "visibility": "private",
+  "ndaRequired": true,
+  "ipPolicy": "solver-retains-until-paid",
+  "evaluationCriteria": [
+    "reproducibility",
+    "biological plausibility",
+    "model performance",
+    "documentation quality"
+  ],
+  "phases": [
+    {
+      "id": "proposal",
+      "title": "Proposal and feasibility",
+      "deliverables": [
+        {
+          "id": "research-plan",
+          "title": "Research plan",
+          "required": true,
+          "acceptedTypes": ["markdown", "pdf"]
+        },
+        {
+          "id": "risk-register",
+          "title": "Risk register",
+          "required": true,
+          "acceptedTypes": ["json", "markdown"]
+        }
+      ]
+    },
+    {
+      "id": "prototype",
+      "title": "Prototype analysis",
+      "deliverables": [
+        {
+          "id": "notebook",
+          "title": "Executable notebook",
+          "required": true,
+          "acceptedTypes": ["ipynb", "python"]
+        },
+        {
+          "id": "dataset-manifest",
+          "title": "Dataset manifest",
+          "required": true,
+          "acceptedTypes": ["json"]
+        }
+      ]
+    },
+    {
+      "id": "final",
+      "title": "Final package",
+      "deliverables": [
+        {
+          "id": "whitepaper",
+          "title": "Whitepaper",
+          "required": true,
+          "acceptedTypes": ["pdf", "markdown"]
+        },
+        {
+          "id": "model-card",
+          "title": "Model card",
+          "required": true,
+          "acceptedTypes": ["markdown", "json"]
+        }
+      ]
+    }
+  ]
+}
