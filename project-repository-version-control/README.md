@@ -21,6 +21,8 @@ Self-contained MVP module for issue #10. It models scientific project repositori
 ```bash
 cd project-repository-version-control
 npm test
+npm run demo
+npm run serve
 ```
 
 ```js
@@ -62,6 +64,24 @@ console.log(repository);
 console.log(runReproducibilityChecks(commit, pipeline));
 ```
 
+## Runnable Demo
+
+`npm run demo` prints a complete scientific repository workspace with required
+sections, typed artifacts, two commits, branch/tag metadata, diff output, fork
+and merge-request records, editor metadata, reproducibility checks, citation
+metadata, REST export links, and archive manifest.
+
+`npm run serve` starts a dependency-free local demo API:
+
+- `GET /health`
+- `GET /demo-repository`
+
+Example:
+
+```bash
+curl http://localhost:4310/demo-repository
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -78,6 +98,7 @@ console.log(runReproducibilityChecks(commit, pipeline));
 | Visual revision timeline | `createRevisionTimeline()` builds ordered timeline records with tags and artifact counts. |
 | Reproducibility checks | `createReproducibilityPipeline()` and `runReproducibilityChecks()` verify data, code/notebook, metadata, manifest, and pipeline readiness. |
 | Citations and exports | `createCitationMetadata()`, `createProgrammaticExport()`, and `exportRepositoryArchive()` emit schema.org citation data, REST endpoints, and archive manifests. |
+| Local reviewer demo | `npm run demo` and `npm run serve` expose a complete repository/version-control workflow. |
 
 ## Verification
 

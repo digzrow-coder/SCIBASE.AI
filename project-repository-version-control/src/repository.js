@@ -280,3 +280,120 @@ export function createProgrammaticExport({ repository, commit, base_url }) {
     exports: ["zip", "tar.gz", "json-manifest", "schema.org"],
   }
 }
+
+export function createDemoRepositoryWorkspace() {
+  const repository = createProjectRepository({
+    repository_id: "repo_catalyst",
+    title: "Catalyst Study",
+    owner_id: "user_ada",
+  })
+  const dataV1 = createArtifact({
+    artifact_id: "data_measurements",
+    path: "data/measurements.csv",
+    type: "csv",
+    content: "sample,value\nA,1\n",
+    metadata: { rows: 1 },
+  })
+  const code = createArtifact({
+    artifact_id: "code_analysis",
+    path: "code/run_analysis.py",
+    type: "python",
+    content: "print('analysis')",
+  })
+  const notebook = createArtifact({
+    artifact_id: "notebook_qc",
+    path: "notebooks/qc.ipynb",
+    type: "notebook",
+    content: "{\"cells\":[]}",
+  })
+  const metadata = createArtifact({
+    artifact_id: "metadata_schema",
+    path: "metadata/schema.json",
+    type: "json",
+    content: "{\"schema\":\"v1\"}",
+  })
+  const baseCommit = createCommit({
+    commit_id: "commit_1",
+    author_id: "user_ada",
+    message: "Initial data release",
+    artifacts: [dataV1, code, metadata],
+    created_at: "2026-05-14T01:00:00.000Z",
+  })
+  const dataV2 = createArtifact({
+    artifact_id: "data_measurements",
+    path: "data/measurements.csv",
+    type: "csv",
+    content: "sample,value\nA,2\n",
+    metadata: { rows: 1 },
+  })
+  const headCommit = createCommit({
+    commit_id: "commit_2",
+    parent_commit_id: baseCommit.commit_id,
+    author_id: "user_ada",
+    message: "Add notebook and update measurements",
+    artifacts: [dataV2, code, notebook, metadata],
+    created_at: "2026-05-14T02:00:00.000Z",
+  })
+  const branchRepository = createBranch({
+    repository,
+    name: "experiment-catalyst",
+    from_commit_id: baseCommit.commit_id,
+  })
+  const tag = createSemanticTag({
+    tag: "preprint-v1.0",
+    version: "1.0.0",
+    commit_id: headCommit.commit_id,
+    doi: "10.1234/scibase.repo.v1",
+  })
+  const fork = createFork({
+    source_repository_id: repository.repository_id,
+    fork_repository_id: "repo_catalyst_fork",
+    owner_id: "user_bob",
+    source_commit_id: baseCommit.commit_id,
+  })
+  const mergeRequest = createMergeRequest({
+    merge_request_id: "mr_notebook",
+    source_repository_id: fork.repository_id,
+    target_repository_id: repository.repository_id,
+    source_commit: headCommit,
+    target_commit: baseCommit,
+    title: "Add quality-control notebook",
+    author_id: "user_bob",
+  })
+  const pipeline = createReproducibilityPipeline({
+    pipeline_id: "pipeline_1",
+    entrypoint: "code/run_analysis.py",
+    environment: "Dockerfile",
+    expected_outputs: ["results/figure.png"],
+  })
+
+  return {
+    repository: branchRepository,
+    commits: [baseCommit, headCommit],
+    diff: diffCommits(baseCommit, headCommit),
+    tag,
+    editor_session: createEditorSession({
+      path: "notebooks/qc.ipynb",
+      format: "jupyter",
+      user_id: "user_ada",
+      base_commit_id: headCommit.commit_id,
+    }),
+    timeline: createRevisionTimeline({ commits: [baseCommit, headCommit], tags: [tag] }),
+    fork,
+    merge_request: mergeRequest,
+    reproducibility: runReproducibilityChecks(headCommit, pipeline),
+    citation: createCitationMetadata({
+      repository,
+      commit: headCommit,
+      doi: "10.1234/scibase.repo",
+      authors: ["Ada Researcher"],
+      keywords: ["catalyst", "reproducibility"],
+    }),
+    api_export: createProgrammaticExport({
+      repository,
+      commit: headCommit,
+      base_url: "https://api.scibase.example/v1/",
+    }),
+    archive: exportRepositoryArchive({ repository, commit: headCommit }),
+  }
+}

@@ -1,10 +1,12 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { createRepositoryDemoServer } from "../src/server.js"
 import {
   createArtifact,
   createBranch,
   createCitationMetadata,
   createCommit,
+  createDemoRepositoryWorkspace,
   createEditorSession,
   createFork,
   createMergeRequest,
@@ -33,6 +35,38 @@ test("creates repositories with required scientific sections", () => {
     () => createProjectRepository({ repository_id: "bad", title: "Bad", owner_id: "u", sections: ["data"] }),
     /Missing required repository sections/,
   )
+})
+
+test("creates a runnable demo repository workspace", () => {
+  const workspace = createDemoRepositoryWorkspace()
+
+  assert.equal(workspace.repository.repository_id, "repo_catalyst")
+  assert.deepEqual(workspace.diff.added, ["notebooks/qc.ipynb"])
+  assert.deepEqual(workspace.diff.modified, ["data/measurements.csv"])
+  assert.equal(workspace.merge_request.mergeable, true)
+  assert.equal(workspace.reproducibility.passed, true)
+  assert.equal(workspace.archive.files.length, 4)
+})
+
+test("serves the demo repository over the local API", async () => {
+  const server = createRepositoryDemoServer()
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address()
+
+  try {
+    const healthResponse = await fetch(`http://127.0.0.1:${port}/health`)
+    assert.equal(healthResponse.status, 200)
+    assert.equal((await healthResponse.json()).status, "ok")
+
+    const workspaceResponse = await fetch(`http://127.0.0.1:${port}/demo-repository`)
+    const workspace = await workspaceResponse.json()
+
+    assert.equal(workspaceResponse.status, 200)
+    assert.equal(workspace.repository.title, "Catalyst Study")
+    assert.equal(workspace.reproducibility.passed, true)
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  }
 })
 
 test("creates typed artifacts inside repository sections", () => {
