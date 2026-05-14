@@ -1,0 +1,82 @@
+{
+  "id": "northstar-research-office",
+  "name": "Northstar Research Office",
+  "projects": [
+    {
+      "id": "alzheimers-cell-atlas",
+      "title": "Alzheimer's Cell Atlas",
+      "department": "Neuroscience",
+      "visibility": "private",
+      "reproducibilityScore": 92,
+      "aiReviews": 7,
+      "storageGb": 42,
+      "tags": ["GRANT-TRACKED", "OPEN-SCIENCE"],
+      "compliance": ["open-access", "data-availability", "reproducibility"],
+      "exportFormats": ["jats", "zenodo-bundle", "datacite"],
+      "files": ["manuscript/main.md", "data/manifest.tsv", "results/figures.zip"],
+      "metadata": {
+        "doi": "10.5555/scibase.demo.001",
+        "orcid": "0000-0002-1825-0097",
+        "funding": "NSF-OPEN-2026"
+      }
+    },
+    {
+      "id": "battery-materials-protocols",
+      "title": "Battery Materials Protocols",
+      "department": "Materials Science",
+      "visibility": "public",
+      "reproducibilityScore": 76,
+      "aiReviews": 3,
+      "storageGb": 18,
+      "tags": ["DOCTORAL-WORK"],
+      "compliance": ["open-access"],
+      "exportFormats": ["latex", "datacite"],
+      "files": ["protocols/synthesis.md", "metadata.json"],
+      "metadata": {
+        "doi": "10.5555/scibase.demo.002",
+        "funding": "HORIZON-EU-DEMO"
+      }
+    }
+  ],
+  "integrations": [
+    {
+      "id": "dspace-sync",
+      "system": "DSpace",
+      "auth": "oauth-client",
+      "endpoints": ["GET /projects", "POST /exports"],
+      "eventTypes": ["project.published", "project.compliance_evaluated"]
+    },
+    {
+      "id": "canvas-notify",
+      "system": "Canvas LMS",
+      "auth": "signed-webhook",
+      "endpoints": ["POST /webhooks/research-output"],
+      "eventTypes": ["project.created", "review.completed"]
+    }
+  ],
+  "exportTargets": [
+    {
+      "id": "zenodo",
+      "system": "Zenodo",
+      "format": "zenodo-bundle",
+      "requiredMetadata": ["doi", "orcid", "funding"]
+    },
+    {
+      "id": "journal-jats",
+      "system": "Journal Submission",
+      "format": "jats",
+      "requiredMetadata": ["doi", "orcid"]
+    },
+    {
+      "id": "datacite",
+      "system": "DataCite",
+      "format": "datacite",
+      "requiredMetadata": ["doi", "funding"]
+    }
+  ],
+  "compliancePolicies": [
+    { "id": "open-access", "description": "Project has open access status recorded" },
+    { "id": "data-availability", "description": "Data availability evidence is attached" },
+    { "id": "reproducibility", "description": "Reproducibility score is suitable for reporting" }
+  ]
+}
