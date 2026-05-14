@@ -70,12 +70,14 @@ reputation metrics.
 
 `npm run serve` starts a local dependency-free demo API:
 
+- `GET /`
 - `GET /health`
 - `GET /demo-workspace`
 
 Example:
 
 ```bash
+open http://localhost:4311/
 curl http://localhost:4311/demo-workspace
 ```
 
