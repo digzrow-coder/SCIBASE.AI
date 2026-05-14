@@ -19,7 +19,7 @@ This module is a compact MVP for SCIBASE issue #12. It models a browser-based re
 
 - `src/editor.js` contains the editor/session domain functions.
 - `src/demo.js` prints a complete demo workspace for reviewer inspection.
-- `src/server.js` exposes a dependency-free local demo API.
+- `src/server.js` exposes a dependency-free local demo UI and API.
 - `test/editor.test.js` covers the expected workflows.
 - `package.json` runs the Node test suite.
 
@@ -65,12 +65,14 @@ the UI capability manifest.
 
 `npm run serve` starts a local demo API:
 
+- `GET /`
 - `GET /health`
 - `GET /demo-workspace`
 
 Example:
 
 ```bash
+open http://localhost:4312/
 curl http://localhost:4312/demo-workspace
 ```
 
