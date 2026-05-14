@@ -19,6 +19,8 @@ Self-contained MVP module for issue #17. It turns uploaded research text into ty
 ```bash
 cd scientific-knowledge-graph
 npm test
+npm run demo
+npm run serve
 ```
 
 ```js
@@ -50,6 +52,25 @@ const graph = buildKnowledgeGraph({
 console.log(searchGraph(graph, "python"));
 ```
 
+## Runnable Demo
+
+`npm run demo` prints a complete knowledge graph workspace with extracted
+entities, relationships, graph stats, semantic search results, entity page
+data, recommendations, and JSON-LD export output.
+
+`npm run serve` starts a dependency-free local browser/API demo:
+
+- `GET /`
+- `GET /health`
+- `GET /demo-graph`
+
+Example:
+
+```bash
+open http://localhost:4316/
+curl http://localhost:4316/demo-graph
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -62,6 +83,7 @@ console.log(searchGraph(graph, "python"));
 | Recommendations | `recommendRelatedEntities()` ranks related nodes by edge weight. |
 | Entity pages | `buildEntityPage()` collects relationships, recommendations, and JSON-LD for an entity. |
 | Linked data exports | `exportGraphJsonLd()` produces schema.org-compatible graph output. |
+| Local reviewer demo | `npm run demo` and `npm run serve` expose the full knowledge-graph workflow. |
 
 ## Verification
 

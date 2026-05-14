@@ -140,3 +140,56 @@ export function exportGraphJsonLd(graph) {
     })),
   }
 }
+
+export function createDemoKnowledgeGraphWorkspace() {
+  const entities = [
+    ...extractScientificEntities({
+      document_id: "doc_crispr",
+      title: "CRISPR screen with Python notebooks",
+      text: "The dataset was analyzed with Python, NumPy, Jupyter, and RNA-seq. See DOI 10.1234/CRISPR.DATA.",
+    }),
+    createEntity({ type: "author", label: "Ada Researcher", aliases: ["A. Researcher"], source_ids: ["doc_crispr"] }),
+    createEntity({ type: "affiliation", label: "Example University", source_ids: ["doc_crispr"] }),
+  ]
+  const relationships = [
+    createRelationship({
+      source_id: "dataset_dataset",
+      target_id: "software_python",
+      type: "analyzed_with",
+      evidence_id: "doc_crispr:methods",
+      weight: 0.9,
+    }),
+    createRelationship({
+      source_id: "method_crispr",
+      target_id: "dataset_dataset",
+      type: "produces",
+      evidence_id: "doc_crispr:abstract",
+      weight: 0.75,
+    }),
+    createRelationship({
+      source_id: "software_jupyter",
+      target_id: "method_rna_seq",
+      type: "documents",
+      evidence_id: "doc_crispr:notebook",
+      weight: 0.6,
+    }),
+    createRelationship({
+      source_id: "author_ada_researcher",
+      target_id: "affiliation_example_university",
+      type: "affiliated_with",
+      evidence_id: "doc_crispr:metadata",
+      weight: 1,
+    }),
+  ]
+  const graph = buildKnowledgeGraph({ entities, relationships })
+  return {
+    graph,
+    search_results: {
+      python: searchGraph(graph, "python"),
+      methods: searchGraph(graph, "seq", { type: "method" }),
+    },
+    entity_page: buildEntityPage(graph, "dataset_dataset"),
+    recommendations: recommendRelatedEntities(graph, "dataset_dataset"),
+    json_ld: exportGraphJsonLd(graph),
+  }
+}

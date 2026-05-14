@@ -1,8 +1,10 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { createKnowledgeGraphDemoServer } from "../src/server.js"
 import {
   buildEntityPage,
   buildKnowledgeGraph,
+  createDemoKnowledgeGraphWorkspace,
   createEntity,
   createRelationship,
   exportGraphJsonLd,
@@ -130,4 +132,29 @@ test("builds entity pages and exports JSON-LD graph data", () => {
   assert.equal(page.linked_data["@type"], "Thing")
   assert.equal(jsonLd["@graph"].length, 2)
   assert.equal(jsonLd.relationships[0].name, "cited_by")
+})
+
+test("creates and serves a runnable demo knowledge graph workspace", async () => {
+  const workspace = createDemoKnowledgeGraphWorkspace()
+  assert.ok(workspace.graph.stats.entity_count >= 6)
+  assert.ok(workspace.graph.stats.relationship_count >= 3)
+  assert.equal(workspace.entity_page.entity.entity_id, "dataset_dataset")
+  assert.ok(workspace.recommendations.length > 0)
+
+  const server = createKnowledgeGraphDemoServer()
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address()
+
+  try {
+    const pageResponse = await fetch(`http://127.0.0.1:${port}/`)
+    assert.equal(pageResponse.status, 200)
+    assert.match(await pageResponse.text(), /Scientific Knowledge Graph/)
+
+    const graphResponse = await fetch(`http://127.0.0.1:${port}/demo-graph`)
+    const payload = await graphResponse.json()
+    assert.equal(graphResponse.status, 200)
+    assert.equal(payload.entity_page.entity.label, "dataset")
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  }
 })
