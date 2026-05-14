@@ -228,6 +228,62 @@ export function buildEditorManifest(document, session) {
   };
 }
 
+export function createDemoEditorWorkspace() {
+  let document = createResearchDocument({
+    title: "Genome Assembly Draft",
+    body:
+      "See [fig:workflow]. Inline model $y = mx + b$.\n\n```python\nprint('quality-control')\n```",
+    citations: [{ id: "smith2026", title: "Assembly Methods", doi: "10.1000/test" }],
+    collaborators: [
+      { id: "u_alice", name: "Alice", role: "owner" },
+      { id: "u_bob", name: "Bob", role: "reviewer" },
+    ],
+    createdAt: "2026-05-13T08:00:00.000Z",
+  });
+  document = addNotebookCell(document, {
+    language: "python",
+    source: "df.describe()",
+    outputs: [{ type: "table", rows: 5 }],
+    comments: [{ userId: "u_bob", body: "Check missing values." }],
+    status: "completed",
+  });
+
+  const session = createCollaborationSession(document);
+  joinSession(session, { id: "u_alice", name: "Alice", role: "owner" }, { section: "abstract", offset: 12 });
+  joinSession(session, { id: "u_bob", name: "Bob", role: "reviewer" }, { section: "methods", offset: 48 });
+  addInlineComment(session, {
+    userId: "u_bob",
+    anchor: "methods:p2",
+    body: "Please clarify the sampling method.",
+  });
+  addSuggestion(session, {
+    userId: "u_alice",
+    anchor: "abstract:s1",
+    original: "fast",
+    replacement: "statistically robust",
+  });
+  addTask(session, {
+    title: "Resolve reviewer note",
+    anchor: "methods:p2",
+    assigneeId: "u_alice",
+    dueAt: "2026-05-20",
+  });
+
+  return {
+    document,
+    session: serializeSession(session),
+    manifest: buildEditorManifest(document, session),
+  };
+}
+
+function serializeSession(session) {
+  return {
+    ...session,
+    users: [...session.users.values()],
+    locks: [...session.locks.values()],
+  };
+}
+
 function normalizeCollaborators(collaborators) {
   return collaborators.map((collaborator) => {
     assertRole(collaborator.role);

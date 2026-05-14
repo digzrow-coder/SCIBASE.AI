@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "demo": "node ./src/demo.js",
+    "serve": "node ./src/server.js",
     "test": "node --test"
   }
 }

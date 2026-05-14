@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createEditorDemoServer } from "../src/server.js";
 import {
   addInlineComment,
   addNotebookCell,
@@ -8,6 +9,7 @@ import {
   autosaveDocument,
   buildEditorManifest,
   createCollaborationSession,
+  createDemoEditorWorkspace,
   createResearchDocument,
   joinSession,
   lockSection,
@@ -35,6 +37,39 @@ test("creates a scientific document with markdown, LaTeX, citations, and referen
   assert.equal(document.codeBlocks[0].language, "python");
   assert.equal(document.citations[0].bibtexKey, "smith2026");
   assert.equal(document.versions.length, 1);
+});
+
+test("creates a runnable demo workspace with editor state and manifest", () => {
+  const workspace = createDemoEditorWorkspace();
+
+  assert.equal(workspace.document.title, "Genome Assembly Draft");
+  assert.equal(workspace.session.users.length, 2);
+  assert.equal(workspace.session.comments.length, 1);
+  assert.equal(workspace.session.suggestions.length, 1);
+  assert.equal(workspace.manifest.supports.latex, true);
+  assert.equal(workspace.manifest.supports.jupyter, true);
+  assert.equal(workspace.manifest.counts.tasks, 1);
+});
+
+test("serves the demo workspace over the local API", async () => {
+  const server = createEditorDemoServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+
+  try {
+    const healthResponse = await fetch(`http://127.0.0.1:${port}/health`);
+    assert.equal(healthResponse.status, 200);
+    assert.equal((await healthResponse.json()).status, "ok");
+
+    const workspaceResponse = await fetch(`http://127.0.0.1:${port}/demo-workspace`);
+    const workspace = await workspaceResponse.json();
+
+    assert.equal(workspaceResponse.status, 200);
+    assert.equal(workspace.document.title, "Genome Assembly Draft");
+    assert.equal(workspace.manifest.supports.livePresence, true);
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
 });
 
 test("tracks real-time presence, cursors, locks, comments, and suggestions", () => {

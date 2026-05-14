@@ -18,6 +18,8 @@ This module is a compact MVP for SCIBASE issue #12. It models a browser-based re
 ## Files
 
 - `src/editor.js` contains the editor/session domain functions.
+- `src/demo.js` prints a complete demo workspace for reviewer inspection.
+- `src/server.js` exposes a dependency-free local demo API.
 - `test/editor.test.js` covers the expected workflows.
 - `package.json` runs the Node test suite.
 
@@ -48,6 +50,28 @@ addInlineComment(session, {
 });
 
 console.log(buildEditorManifest(document, session));
+```
+
+## Runnable Demo
+
+```bash
+npm run demo
+npm run serve
+```
+
+`npm run demo` prints a complete editor workspace with a scientific document,
+two active collaborators, notebook output, comments, suggestions, tasks, and
+the UI capability manifest.
+
+`npm run serve` starts a local demo API:
+
+- `GET /health`
+- `GET /demo-workspace`
+
+Example:
+
+```bash
+curl http://localhost:4312/demo-workspace
 ```
 
 ## Verification
