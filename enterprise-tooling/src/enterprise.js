@@ -200,3 +200,96 @@ export function buildProductivityReport({ projects = [], peer_reviews = [], ai_r
     .map(([department, metrics]) => ({ department, ...metrics }))
     .sort((a, b) => b.projects - a.projects || a.department.localeCompare(b.department))
 }
+
+export function createDemoEnterpriseWorkspace() {
+  const organization = createOrganizationProfile({
+    organization_id: "org_example",
+    name: "Example University",
+    domains: ["example.edu"],
+    departments: [
+      { department_id: "biology", name: "Biology", cost_center: "BIO-100" },
+      { department_id: "physics", name: "Physics", cost_center: "PHY-200" },
+    ],
+    saml_entity_id: "https://idp.example.edu/saml",
+  })
+  const roles = [
+    assignEnterpriseRole({ user_id: "owner_ada", organization_id: organization.organization_id, role: "owner" }),
+    assignEnterpriseRole({ user_id: "admin_grace", organization_id: organization.organization_id, role: "admin" }),
+    assignEnterpriseRole({ user_id: "auditor_lin", organization_id: organization.organization_id, role: "auditor" }),
+  ]
+  const compliance = [
+    createComplianceRecord({
+      record_id: "comp_nih",
+      project_id: "project_atlas",
+      mandate: "NIH Data Management and Sharing Policy",
+      requirement: "Dataset must be deposited in an approved repository.",
+      evidence: [{ type: "repository", url: "https://example.edu/datasets/project_atlas" }],
+      due_date: "2026-06-01",
+    }),
+  ]
+  const projects = [
+    { project_id: "project_atlas", visibility: "private", department: "biology" },
+    { project_id: "project_quantum", visibility: "public", department: "physics" },
+    { project_id: "project_methods", visibility: "public", department: "biology" },
+  ]
+  const users = [
+    { user_id: "owner_ada", status: "active" },
+    { user_id: "admin_grace", status: "active" },
+    { user_id: "auditor_lin", status: "inactive" },
+  ]
+  const usage_events = [
+    { storage_gb: 120.5, compute_hours: 44 },
+    { storage_gb: 30.25, compute_hours: 12 },
+  ]
+  const integrations = [
+    buildIntegrationManifest({
+      integration_id: "int_saml",
+      provider: "Example IdP",
+      type: "saml",
+      scopes: ["sso:read"],
+      webhook_url: "https://scibase.example.edu/webhooks/saml",
+    }),
+    buildIntegrationManifest({
+      integration_id: "int_canvas",
+      provider: "Canvas LMS",
+      type: "lms",
+      scopes: ["courses:read", "assignments:write"],
+      field_mappings: { course_id: "project.department" },
+    }),
+  ]
+  const audit_log = exportAuditLog({
+    organization_id: organization.organization_id,
+    events: [
+      {
+        audit_id: "audit_invite",
+        organization_id: organization.organization_id,
+        actor_id: "admin_grace",
+        action: "user.invite",
+        target_id: "researcher_new",
+        created_at: "2026-05-14T01:00:00.000Z",
+      },
+      {
+        audit_id: "audit_integration",
+        organization_id: organization.organization_id,
+        actor_id: "owner_ada",
+        action: "integration.configure",
+        target_id: "int_saml",
+        created_at: "2026-05-14T02:00:00.000Z",
+      },
+    ],
+  })
+
+  return {
+    organization,
+    roles,
+    dashboard: buildAdminDashboard({ projects, users, usage_events, compliance_records: compliance }),
+    compliance,
+    integrations,
+    audit_log,
+    productivity: buildProductivityReport({
+      projects,
+      peer_reviews: [{ department: "biology" }, { department: "physics" }],
+      ai_reviews: [{ department: "biology" }, { department: "biology" }],
+    }),
+  }
+}

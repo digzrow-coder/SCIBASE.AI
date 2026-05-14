@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { createEnterpriseDemoServer } from "../src/server.js"
 import {
   assignEnterpriseRole,
   buildAdminDashboard,
@@ -7,6 +8,7 @@ import {
   buildProductivityReport,
   canPerform,
   createComplianceRecord,
+  createDemoEnterpriseWorkspace,
   createOrganizationProfile,
   exportAuditLog,
 } from "../src/enterprise.js"
@@ -148,4 +150,29 @@ test("builds department productivity reports", () => {
   assert.equal(report[0].projects, 2)
   assert.equal(report[0].peer_reviews, 1)
   assert.equal(report[0].ai_reviews, 2)
+})
+
+test("creates and serves a runnable enterprise demo workspace", async () => {
+  const workspace = createDemoEnterpriseWorkspace()
+  assert.equal(workspace.organization.organization_id, "org_example")
+  assert.equal(workspace.roles.length, 3)
+  assert.equal(workspace.dashboard.project_count, 3)
+  assert.equal(workspace.integrations.length, 2)
+
+  const server = createEnterpriseDemoServer()
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const { port } = server.address()
+
+  try {
+    const pageResponse = await fetch(`http://127.0.0.1:${port}/`)
+    assert.equal(pageResponse.status, 200)
+    assert.match(await pageResponse.text(), /Enterprise Tooling/)
+
+    const demoResponse = await fetch(`http://127.0.0.1:${port}/demo-enterprise`)
+    const payload = await demoResponse.json()
+    assert.equal(demoResponse.status, 200)
+    assert.equal(payload.organization.name, "Example University")
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+  }
 })

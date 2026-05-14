@@ -18,6 +18,8 @@ Self-contained MVP module for issue #19. It models institutional controls for un
 ```bash
 cd enterprise-tooling
 npm test
+npm run demo
+npm run serve
 ```
 
 ```js
@@ -45,6 +47,25 @@ console.log(admin.permissions);
 console.log(buildAdminDashboard({ projects: [], users: [], usage_events: [] }));
 ```
 
+## Runnable Demo
+
+`npm run demo` prints a complete enterprise workspace with an organization
+profile, SAML metadata, enterprise role assignments, admin dashboard metrics,
+compliance records, integration manifests, audit log, and productivity report.
+
+`npm run serve` starts a dependency-free local browser/API demo:
+
+- `GET /`
+- `GET /health`
+- `GET /demo-enterprise`
+
+Example:
+
+```bash
+open http://localhost:4318/
+curl http://localhost:4318/demo-enterprise
+```
+
 ## Requirement Mapping
 
 | Issue requirement | Implementation |
@@ -57,6 +78,7 @@ console.log(buildAdminDashboard({ projects: [], users: [], usage_events: [] }));
 | Role-based access controls | `assignEnterpriseRole()` and `canPerform()` map roles to project, billing, compliance, integration, and user-management permissions. |
 | Integrations | `buildIntegrationManifest()` models SAML, OAuth, LMS, repository, webhook, and data-warehouse connections. |
 | Audit logs | `exportAuditLog()` emits organization-filtered, time-ordered audit events. |
+| Local reviewer demo | `npm run demo` and `npm run serve` expose the full enterprise tooling workflow. |
 
 ## Verification
 
